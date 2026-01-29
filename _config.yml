@@ -4,9 +4,9 @@
 
 title: ECE 5160 Fast Robots Labs
 first_name: Jonathan
-middle_name: 
+middle_name:
 last_name: Ma
-contact_note: 
+contact_note:
 description: > # the ">" symbol means to ignore newlines until "footer_text:"
   Jonathan Ma's lab reports for ECE 5160: Fast Robots for Spring 2026.
 footer_text: >
@@ -67,7 +67,7 @@ bing_site_verification: # out your bing-site-verification ID (Bing Webmaster)
 # -----------------------------------------------------------------------------
 
 collections:
-  projects:
+  labs:
     output: true
 
 # -----------------------------------------------------------------------------
