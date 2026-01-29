@@ -16,11 +16,11 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/ece5160-labreports/labs/";
           },
-        },{id: "projects-lab-1",
+        },{id: "labs-lab-1",
           title: 'Lab 1',
           description: "Artemis and Bluetooth",
-          section: "Projects",handler: () => {
-              window.location.href = "/ece5160-labreports/projects/lab1.html";
+          section: "Labs",handler: () => {
+              window.location.href = "/ece5160-labreports/labs/lab1.html";
             },},{
         id: 'social-email',
         title: 'email',
