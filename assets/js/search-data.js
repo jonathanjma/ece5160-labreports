@@ -23,7 +23,7 @@ ninja.data = [{
               window.location.href = "/ece5160-labreports/labs/lab1.html";
             },},{id: "labs-lab-2",
           title: 'Lab 2',
-          description: "IMU",
+          description: "Inertial Measurement Unit (IMU)",
           section: "Labs",handler: () => {
               window.location.href = "/ece5160-labreports/labs/lab2.html";
             },},{
