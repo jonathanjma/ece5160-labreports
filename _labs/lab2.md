@@ -3,7 +3,7 @@ layout: page
 title: Lab 2
 description: Inertial Measurement Unit (IMU)
 img: assets/img/lab2/imu.webp
-importance: 1
+importance: 2
 ---
 
 ### Setup
