@@ -37,8 +37,41 @@ I first started off by running the example program under `File->Examples->Apollo
     </div>
 </div>
 
-Short, Medium, and Long
+Comparing the short, medium, and long distance modes, we see that each mode has its own pros and cons. As seen in the images from the datasheet below, the short mode sees the shortest distance, but also performs the best under strong ambient light. It also allows for 20ms sensor readings, which allows for fast loop times. Medium mode doubles the distance compared to short mode, and long mode triples the distance. However, these modes require longer sensor readings and under strong ambient light they perform worse than short mode. Ultimately, I choose short mode since the fast measurements are crucial for the car and most obstacles should be within 1.3 meters.
 
+<div class="row">
+    <div class="col-sm mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="assets/img/lab3/distance_stats.png" title="example image" class="img-fluid rounded z-depth-1" width="60%" %}
+    </div>
+</div>
 
+<div class="row">
+    <div class="col-sm mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="assets/img/lab3/timing_stats.png" title="example image" class="img-fluid rounded z-depth-1" width="60%" %}
+    </div>
+</div>
+
+To test the ToF sensor's accuracy, repeatability, and ranging time, I used the following setup where I taped the sensor to the back of my laptop I measured the distance between it and a wall with a ruler.
+
+<div class="row">
+    <div class="col-sm mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="assets/img/lab3/test_setup.jpeg" title="example image" class="img-fluid rounded z-depth-1" width="60%" %}
+    </div>
+</div>
+
+The graph below shows the sensor's distance measurements compared to a ruler. This shows that the distance measurements almost exactly match the ruler, even past the 1300mm max distance stated by the datasheet.
+
+<div class="row">
+    <div class="col-sm mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="assets/img/lab3/accuracy.png" title="example image" class="img-fluid rounded z-depth-1" width="60%" %}
+    </div>
+</div>
+
+For repeatability, I did 3 sets of measuremenst where I had the sensor collect 32 samples at 3 different distances. 
+- At 300mm, the standard devitation was 0.83mm
+- At 600mm, the standard devitation was 1.13mm
+- At 900mm, the standard devitation was 1.18mm
+
+This shows that as the distance increases, the repeatability decreases slightly. And for ranging time, using the example code I get a ranging time of 50ms for all distances below 135cm. Above 135cm, the ranging time is 30ms, but that is probably because the sensor is just estimating the distance.
 
 ### 5000 Level Tasks
