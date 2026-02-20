@@ -26,6 +26,11 @@ ninja.data = [{
           description: "Inertial Measurement Unit (IMU)",
           section: "Labs",handler: () => {
               window.location.href = "/ece5160-labreports/labs/lab2.html";
+            },},{id: "labs-lab-3",
+          title: 'Lab 3',
+          description: "Time of Flight (ToF)",
+          section: "Labs",handler: () => {
+              window.location.href = "/ece5160-labreports/labs/lab3.html";
             },},{
         id: 'social-email',
         title: 'email',
