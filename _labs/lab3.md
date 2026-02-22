@@ -12,7 +12,7 @@ For the car, I was given 2 ToF sensors. I decided it would be best to put one se
 
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/lab3/wiring.png" title="example image" class="img-fluid rounded z-depth-1" width="60%" %}
+        {% include figure.liquid loading="eager" path="assets/img/lab3/wiring.png" title="example image" class="img-fluid rounded z-depth-1" width="75%" %}
     </div>
 </div>
 
@@ -20,10 +20,10 @@ This lab involved a considerate amount of soldering, and the photos below shows 
 
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/lab3/battery_soldered.jpeg" title="example image" class="img-fluid rounded z-depth-1" width="60%" %}
+        {% include figure.liquid loading="eager" path="assets/img/lab3/battery_soldered.jpeg" title="example image" class="img-fluid rounded z-depth-1" %}
     </div>
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/lab3/tof_soldered.jpeg" title="example image" class="img-fluid rounded z-depth-1" width="60%" %}
+        {% include figure.liquid loading="eager" path="assets/img/lab3/tof_soldered.jpeg" title="example image" class="img-fluid rounded z-depth-1" %}
     </div>
 </div>
 
@@ -41,13 +41,10 @@ Comparing the short, medium, and long distance modes, we see that each mode has 
 
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/lab3/distance_stats.png" title="example image" class="img-fluid rounded z-depth-1" width="60%" %}
+        {% include figure.liquid loading="eager" path="assets/img/lab3/distance_stats.png" title="example image" class="img-fluid rounded z-depth-1" %}
     </div>
-</div>
-
-<div class="row">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/lab3/timing_stats.png" title="example image" class="img-fluid rounded z-depth-1" width="60%" %}
+        {% include figure.liquid loading="eager" path="assets/img/lab3/timing_stats.png" title="example image" class="img-fluid rounded z-depth-1" %}
     </div>
 </div>
 
@@ -74,4 +71,147 @@ For repeatability, I did 3 sets of measuremenst where I had the sensor collect 3
 
 This shows that as the distance increases, the repeatability decreases slightly. And for ranging time, using the example code I get a ranging time of 50ms for all distances below 135cm. Above 135cm, the ranging time is 30ms, but that is probably because the sensor is just estimating the distance.
 
+To connect two ToF sensors to the Artemis, we need to utilize the XSHUT pin we talked about earlier. So when we initialize the sensors, we first pull this pin low to turn off ToF2, then initialize ToF1 and change its default address, then pull this pin high to turn on ToF2, which uses its default address.
+
+```c
+pinMode(SHUTDOWN_PIN, OUTPUT);
+digitalWrite(SHUTDOWN_PIN, LOW); // turn off tof2 to set tof1 address
+bool tof1_status = tof1.begin();
+Serial.print("ToF1 Initialization ");
+Serial.println(tof1_status != 0 ? "FAILED" : "Success");
+tof1.setI2CAddress(23);
+tof1.setDistanceModeShort();
+
+digitalWrite(SHUTDOWN_PIN, HIGH); // turn on tof2
+bool tof2_status = tof2.begin();
+Serial.print("ToF2 Initialization ");
+Serial.println(tof2_status != 0 ? "FAILED" : "Success");
+tof2.setDistanceModeShort();
+```
+Below is photo of my setup with both ToF sensors and the IMU connected to the QWIIC breakout board.
+
+<div class="row">
+    <div class="col-sm mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="assets/img/lab3/full_setup.jpeg" title="example image" class="img-fluid rounded z-depth-1" width="60%" %}
+    </div>
+</div>
+
+To evaluate the speed of my main loop with the ToF sensors, I used the following code. This code uses continuous mode so we only need to call `startRanging()` once at the start. The screenshot below shows the output of this code, and we can see that the loop time is roughly 3-5ms.
+
+```c
+tof1.startRanging();
+tof2.startRanging();
+
+...
+
+Serial.print("System time: ");
+Serial.println(millis());
+if (tof1.checkForDataReady()) {
+    int distance1 = tof1.getDistance();
+    tof1.clearInterrupt();
+    Serial.print("ToF1 Distance: ");
+    Serial.println(distance1);
+}
+if (tof2.checkForDataReady()) {
+    int distance2 = tof2.getDistance();
+    tof2.clearInterrupt();
+    Serial.print("ToF2 Distance: ");
+    Serial.println(distance2);
+}
+```
+
+<div class="row">
+    <div class="col-sm mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="assets/img/lab3/loop_times.png" title="example image" class="img-fluid rounded z-depth-1" width="20%" %}
+    </div>
+</div>
+
+To allow the collection of timestamped ToF data, I wrote the following function. 
+
+```c
+void collectToFData() {
+
+    int distance1 = tof1.getDistance();
+    tof1.clearInterrupt();
+    int distance2 = tof2.getDistance();
+    tof2.clearInterrupt();
+
+    millis_data[cur_points] = millis();
+    tof1_data[cur_points] = distance1;
+    tof2_data[cur_points] = distance2;
+
+    cur_points++;
+    if (cur_points == DATA_POINTS) {
+        tof1.stopRanging();
+        tof2.stopRanging();
+    }
+}
+```
+
+This function is only called in the main loop function if the following conditions are met. `DATA_POINTS` was defined to be 100 which is around 10 seconds of data.
+```c
+if (collect_tof_data && tof1.checkForDataReady() && tof2.checkForDataReady() && cur_points < DATA_POINTS) {
+    collectToFData();
+}
+```
+
+Finally, I created 2 commands which start the collection of ToF data and stop the collection and send the data back via Bluetooth.
+```c
+case COLLECT_TOF_DATA: {
+    collect_tof_data = true;
+    cur_points = 0;
+
+    tof1.startRanging();
+    tof2.startRanging();
+
+    break;
+}
+case GET_TOF_DATA: {
+    collect_tof_data = false;
+
+    for (int i = 0; i < min(cur_points, DATA_POINTS); i++) {
+        tx_estring_value.clear();
+        // time,tof1,tof2
+        tx_estring_value.append(String(millis_data[i]).c_str());
+        tx_estring_value.append(",");
+        tx_estring_value.append(tof1_data[i]);
+        tx_estring_value.append(",");
+        tx_estring_value.append(tof2_data[i]);
+        tx_characteristic_string.writeValue(tx_estring_value.c_str());
+
+        Serial.print("Sent back: ");
+        Serial.println(tx_estring_value.c_str());
+    }
+
+    break;
+}
+```
+
+The plot to the left shows data points from the 2 ToF sensors graphed versus time, while the plot to the right shows IMU pitch and roll to show that my previous code was not affected.
+
+<div class="row">
+    <div class="col-sm mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="assets/img/lab3/tof_graph.png" title="example image" class="img-fluid rounded z-depth-1" %}
+    </div>
+    <div class="col-sm mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="assets/img/lab3/imu_graph.png" title="example image" class="img-fluid rounded z-depth-1" %}
+    </div>
+</div>
+
 ### 5000 Level Tasks
+
+There are various kinds of distance sensors, including amplitude-based, IR triangulation, and ToF. Amplitude-based is the cheapest and has a small form factor, but it has a limited range of 10cm and doesn't work when there is a lot of ambient light. IR triangulation gives us more range and is not sensitive to surface textures, but it is more bulky and a low sample rate. Finally, ToF gives us the most range and is not sensitive to ambient light, but it requires more complex processing and has the lowest sample rate.
+
+I tested the ToF sensor across various colors and textures to compare its performance. For colors, I held the sensor 300mm away from my computer screen and I filled my screen with various colors. Here are the results, which show that color has little to no effect on the measurements.
+- White: 300mm
+- Red: 300mm
+- Green: 300mm
+- Blue: 300mm
+
+For textures, I also held the sensor 300mm away from the following materials. Here are the results, which show that texture has some effect on the measurements.
+- Drywall: 300mm
+- Wood: 290mm
+- Glass: 310mm
+- Carpet: 300mm
+
+Acknowledgement: I referenced Aidan Derocher's website from Spring 2025 for inspiration
