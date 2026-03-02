@@ -31,6 +31,11 @@ ninja.data = [{
           description: "Time of Flight (ToF)",
           section: "Labs",handler: () => {
               window.location.href = "/ece5160-labreports/labs/lab3.html";
+            },},{id: "labs-lab-4",
+          title: 'Lab 4',
+          description: "Motors and Open Loop Control",
+          section: "Labs",handler: () => {
+              window.location.href = "/ece5160-labreports/labs/lab4.html";
             },},{
         id: 'social-email',
         title: 'email',
