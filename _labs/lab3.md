@@ -27,7 +27,7 @@ This lab involved a considerate amount of soldering, and the photos below shows 
     </div>
 </div>
 
-### Lab
+### ToF Sensor Testing
 
 I first started off by running the example program under `File->Examples->Apollo3->Example05_Wire_I2C` to verify the I2C address of the ToF sensor. As shown in the image below, the program prints an address of 0x29, which is different than the 0x52 address specified by the datasheet. But upon further analysis, the datasheet says the LSB of the address is the read/write bit, and 0x29 is just 0x52 shifted right a bit, so this makes sense.
 
@@ -70,6 +70,8 @@ For repeatability, I did 3 sets of measuremenst where I had the sensor collect 3
 - At 900mm, the standard devitation was 1.18mm
 
 This shows that as the distance increases, the repeatability decreases slightly. And for ranging time, using the example code I get a ranging time of 50ms for all distances below 135cm. Above 135cm, the ranging time is 30ms, but that is probably because the sensor is just estimating the distance.
+
+### Integrating the Sensor
 
 To connect two ToF sensors to the Artemis, we need to utilize the XSHUT pin we talked about earlier. So when we initialize the sensors, we first pull this pin low to turn off ToF2, then initialize ToF1 and change its default address, then pull this pin high to turn on ToF2, which uses its default address.
 
