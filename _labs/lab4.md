@@ -149,7 +149,7 @@ void stop() {
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/rxCUAzYp7ys?si=ZQo9i1c-w-uci8o6" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
-Next, I tested the lowest PWM values which the robot can move forward and do an on-axis left turn. I found that to move forward, the lowest PWM value is 45, a 17.5% duty cycle, which I show in the video on the left. And to do an on-axis left turn, the lowest PWM value was 135, a 53% duty cycle, which I show in the video on the right.
+Next, I tested the lowest PWM values which the robot can move forward and do an on-axis left turn. I found that to move forward, the lowest PWM value is 50, a 20% duty cycle, which I show in the video on the left. And to do an on-axis left turn, the lowest PWM value was 135, a 53% duty cycle, which I show in the video on the right.
 
 <div class="row">
     <div class="col-sm-6 mt-3 mt-md-0">
@@ -190,7 +190,7 @@ case DRIVE_SEQUENCE: {
 
 Looking at the oscilloscope reading, `analogWrite` produces a PWM output with a frequency of 184Hz. This seems to be on a low end since for a previous class I implemented PWM control in the kHz frequency. However this should be adaquate since the motor driver's datasheet states that it actually drives the motor at an internal PWM frequency of 50kHz. If we manually configure the timers to generate a faster PWM signal, this would allow us to generate smoother signals to the motor, especially once we start implementing closed loop PID control.
 
-To find the lowest PWM value where we can keep the robot running once it is in motion, I created a command which sets the PWM output to 50, which is just above the minimum PWN we found earlier, for half a second to get the car moving. Then, I set the PWM output to a lower value for 2 seconds. After trying a bunch of values, I found the lowest PWM value to maintain motion is 15, a 5.8% duty cycle. This is shown in the video below.
+To find the lowest PWM value where we can keep the robot running once it is in motion, I created a command which sets the PWM output to 55, which is just above the minimum PWN we found earlier, for a second to get the car moving. Then, I set the PWM output to a lower value for 2 seconds. After trying a bunch of values, I found the lowest PWM value to maintain motion is 40, a 15% duty cycle. This is shown in the video below.
 
 ```c
 case FRICTION_SEQUENCE: {
@@ -198,6 +198,7 @@ case FRICTION_SEQUENCE: {
     forward();
     delay(500);
     base_speed = speed2;
+    forward();
     delay(2000);
     stop();
     break;
