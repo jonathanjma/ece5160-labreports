@@ -36,6 +36,11 @@ ninja.data = [{
           description: "Motors and Open Loop Control",
           section: "Labs",handler: () => {
               window.location.href = "/ece5160-labreports/labs/lab4.html";
+            },},{id: "labs-lab-5",
+          title: 'Lab 5',
+          description: "Linear PID Control and Extrapolation",
+          section: "Labs",handler: () => {
+              window.location.href = "/ece5160-labreports/labs/lab5.html";
             },},{
         id: 'social-email',
         title: 'email',
