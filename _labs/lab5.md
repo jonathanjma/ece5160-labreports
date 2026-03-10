@@ -2,7 +2,7 @@
 layout: page
 title: Lab 5
 description: Linear PID Control and Extrapolation
-img: assets/img/lab5/pid.webp
+img: assets/img/lab5/pid.jpg
 importance: 5
 ---
 
@@ -66,7 +66,7 @@ if (drive_start_time != 0 && millis() - drive_start_time > drive_time) {
 }
 ```
 
-I used the following notification handler in Python to parse the PID debug data into lists so that it can be visualized in graphs.
+I used the following notification handler in Python to parse the PID debug data into lists so that it can be visualized in graphs. I found the TQDM library helpful as it shows a nice progress bar of how many data points have been sent over Bluetooth so far.
 
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
@@ -84,7 +84,7 @@ For this lab, I decided to implement a PI controller. Although this would lack t
 
 $u(t) = K_p e(t) + K_i \int_{0}^{t} e(\tau) d\tau$
 
-The piece of code below shows the PID control loop I used. The set point was set to be 300mm, which is roughly 1 foot. To deal with deadband, the minimum PWM output I allowed was 40 for moving forward and -40 backward. If the controller outputted any number between that range, it was min/maxed so it would be outside the deadband. Later on, I did run into issues where the car kept moving back and forth around the set point, so I updated the logic to tell the motors to stop moving if the PWM output was between -3 and 3, which reduced the severity of this issue.
+The piece of code below shows the PID control loop I used. The set point was set to be 300mm, which is roughly 1 foot. To deal with deadband, the minimum PWM output I allowed was 40 for moving forward and -40 backward. If the controller outputted any number between that range, it was min/maxed so it would be outside the deadband. Later on, I did run into issues where the car kept moving back and forth around the set point, so I updated the logic to tell the motors to stop moving if the PWM output was between -3 and 3, which reduced the severity of this issue. I also min/maxed the PWM outputs between 125 and -125 since I found that beyond this the car would move way to fast and out of control.
 
 ```c
 void pid_control() {
@@ -117,7 +117,15 @@ void pid_control() {
 }
 ```
 
-vids and tuning discussion
+After a bunch of tuning runs, I settled on a Kp of 0.06. As you can see in the video below, this would result in the car overshooting the target, backing up to the target, and then oscillating around it. However, lower Kp values would result in a super slow approach which undershoots the target, so I decided to stick with this value. For the Ki term, testing showed that with just Kp, the car was  reaching the target each time after a few oscillations with little to no steady state error. I did have a few tuning runs where steady state error occured, so I graphed the error sum used for Ki and saw that at the time the car usually reached the wall, the error sum was around 200. After a few more runs I ended up settling on a Ki of 0.05. The graph shows the distance reported as the car approaches the 1 foot set point. 
+
+<div class="row">
+    <div class="col-sm mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="assets/img/lab5/non_extrapolated.png" title="example image" class="img-fluid rounded z-depth-1" width="50%" %}
+    </div>
+</div>
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/9Jn4biEd_-Q?si=_yfDkepEI3y3rv70" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 ### Extrapolation
 
@@ -137,3 +145,21 @@ if (tof_front.checkForDataReady()) {
     distance_front = prev_distance_front_raw + slope * (millis() - last_measure_time);
 }
 ```
+
+The graph of the extrapolated ToF distance values and the associated PWM output for each timestep is shown below. The video shows the final tuned controller approaching the wall and responding to a few disturbances as I tried to push the car around.
+
+<div class="row">
+    <div class="col-sm mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="assets/img/lab5/extrapolated.png" title="example image" class="img-fluid rounded z-depth-1" width="75%" %}
+    </div>
+</div>
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/MhT6D2W-ZpI?si=uYV2zc7axbeKYpXT" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+### 5000 Level Tasks
+
+Whenever the Ki term is used for PID control, integrator windup is always an issue. This occurs when a disturbance, obstacle, or high friction causes the integrated error sum to grow so large and is unable to shrink fast enough that an extremely large PWM output is sent to the motors, causing the car to drive well past its set point. This is demonstrated in the video below. When tuning the Ki term, I graphed the error sum I noticed that at the time the car usually reached the wall, the error sum was around 200, so I set the max to be 250.
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/L3envAN5Oxo?si=KIzxJ20RUbWw-DGu" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+Acknowledgement: I referenced Aidan Derocher's website from Spring 2025 for inspiration
