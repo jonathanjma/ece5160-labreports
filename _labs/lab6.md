@@ -78,7 +78,7 @@ I used the following notification handler in Python to parse the PID debug data 
 
 ### Digital Motion Processor (DMP)
 
-In lab 2, the IMU was used to calculate the yaw by integrating gyroscope output over time: `gyr_yaw = gyr_yaw - (IMU.gyrZ() * dt)`. However, any inaccuracies, noise, or drift in the gyroscope output will quickly cause the error in the yaw calculation to grow unbounded. For pitch and roll directions, this can be countered by using a complementary filter with accelorameter data. But since gravity stays the same for yaw, this won't work. Instead, we can use the digital motion processor (DMP) which is integrated into our IMU. The DMP is super nice since it fuses data from the gyroscope and accelerometer to perform error and drift correction and outputs them as quaternions. Using the [DMP tutorial](https://fastrobotscornell.github.io/FastRobots-2026/tutorials/dmp.html) found on the course website, the code below initializes the DMP module. One thing I had to change in the DMP code was its data rate since the DMP stores all of its data in a FIFO queue. In its default settings, the yaw measurements were lagging since my code wasn't sampling it fast enough, so I changed the data rate parameter to 1, which is 27.5 Hz, or one measurement every 35 ms. 
+In lab 2, the IMU was used to calculate the yaw by integrating gyroscope output over time: `gyr_yaw = gyr_yaw - (IMU.gyrZ() * dt)`. However, any inaccuracies, noise, or drift in the gyroscope output will quickly cause the error in the yaw calculation to grow unbounded. For pitch and roll directions, this can be countered by using a complementary filter with accelorameter data. But since gravity stays the same for yaw, this won't work. Instead, we can use the digital motion processor (DMP) which is integrated into our IMU. The DMP is super nice since it fuses data from the gyroscope and accelerometer to perform error and drift correction and outputs them as quaternions. Using the [DMP tutorial](https://fastrobotscornell.github.io/FastRobots-2026/tutorials/dmp.html) found on the course website, the code below initializes the DMP module. One thing I had to change in the DMP code was its data rate since the DMP stores all of its data in a FIFO queue. Using its default settings, the yaw measurements were lagging behind since my code wasn't sampling it fast enough, so I changed the data rate parameter to 1, which is 27.5 Hz, or one measurement every 35 ms. 
 
 ```c
 // IMU DMP setup
@@ -144,7 +144,7 @@ For this lab, I decided to implement a PID controller since this would add overs
 
 $u(t) = K_p e(t) + K_i \int_{0}^{t} e(\tau) d\tau + K_d \frac{de(t)}{dt}$
 
-The piece of code below shows the PID control loop I used. I first calculate the error based on the current target angle. If this error is more than 180 degress, I subtract or add 360 degrees to ensure that the car turns the optimal way
+The piece of code below shows the PID control loop I used. I first calculate the error based on the current target angle. If this error is more than 180 degress, I subtract or add 360 degrees to ensure that the car turns the optimal way.
 
 To deal with deadband, the minimum PWM output I allowed was 130 for turning left and -130 for turning right. Similar to lab 5, if the controller outputted any number between that range, it was min/maxed so it would be outside the deadband. To prevent the car kept moving back and forth around the set point, I also tell the motors to stop moving if the PWM output is between -3 and 3. Finally, the PWM outputs are also min/maxed between 200 and -200 since I found that beyond this the car would move turn too fast and out of control.
 
@@ -189,65 +189,87 @@ void pid_rotate_control() {
 }
 ```
 
-### Proportional Control
+#### Proportional Control
 
-I started by tuning the porportional gain Kp. From lab 4, I know a reasonable PWM value for turning would be 150. Additionally, the maximum angle the car will ever have to rotate is 180 degrees. Therefore, a reasonable value of Kp to start testing with would be 150 divided by 180 which is 0.85. As I tuned Kp, I found that a higher Kp would be result in a more snappy controller with some overshoot, which could then be mitigated with a derivative term. I ended up settling on a Kp value of 1.0. In the graph and video below, the car rotates from 0 to 180 degrees, overshoots a bit, but is able to correct itself and settle at the target angle.
+I started by tuning the porportional gain Kp. From lab 4, I know a reasonable PWM value for turning would be 150. Additionally, the maximum angle the car will ever have to rotate is 180 degrees. Therefore, a reasonable value of Kp to start testing with would be 150 divided by 180 which is 0.85. As I tuned Kp, I found that a higher Kp would be result in a more snappy controller with some overshoot, which could then be mitigated with a derivative term. I ended up settling on a Kp value of 1.0 since 0.85 didn't give a strong enough response. In the graph and video below, the car rotates from 0 to 180 degrees, overshoots a bit, but is able to correct itself and settle at the target angle.
 
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/lab6/p_control.png" title="example image" class="img-fluid rounded z-depth-1" width="60%" %}
+        {% include figure.liquid loading="eager" path="assets/img/lab6/p_control.png" title="example image" class="img-fluid rounded z-depth-1" width="75%" %}
     </div>
 </div>
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/lr5Rt8nWxIQ?si=OcOG3V3AoBWcg78_" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
-### Derivative Control
+#### Derivative Control
 
-For the derivative term, taking the derivative of the current yaw error seems redundant since usually yaw is this the integral of angular velocity. But since we are using the DMP, the yaw outputs are distinct measurements and not just integrated values. When using the derivative term, there are two main issues which can make our system unstable: derivative kick and noisy derivative calculations. To deal with derivative kick, each time the targat angle changes, I set the last_error variable used to calculate the slope to the current error so that it becomes practically zero. To address the noisy measurements, I added a low pass filter to the derivative output.
+For the derivative term, taking the derivative of the current yaw error seems redundant since usually yaw is this the integral of angular velocity. But since we are using the DMP, the yaw outputs are distinct measurements and not just integrated values. When using the derivative term, there are two main issues which can make our system unstable: derivative kick and noisy derivative calculations. To deal with derivative kick, each time the targat angle changes, I set the `last_error` variable used to calculate the slope to the current error so that for the first iteration, the derivative is practically zero. To address the noisy measurements, I added a low pass filter to the derivative output.
 
-
+For the alpha value of my low pass filter, I initially started with 0.025, but when tuning my derivative term I noticed that while this was great for filtering the high frequency noise, it introduced significant phase lag which would create a bump in the error graph before the car reached the target angle where the error would briefly increase before decreasing again. I ended up choosing an alpha value of 0.25, which makes the derivative term noisier, but also makes the controller more snappy and responsive. The images below show the progression of the derivative signal from just the raw signal, fixing derivative kick, and then adding the lowpass filter.
 
 <div class="row">
     <div class="col-sm-4 mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/lab6/d_kick.png" title="example image" class="img-fluid rounded z-depth-1" width="60%" %}
+        {% include figure.liquid loading="eager" path="assets/img/lab6/d_kick.png" title="example image" class="img-fluid rounded z-depth-1" %}
     </div>
     <div class="col-sm-4 mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/lab6/d_no_lowpass.png" title="example image" class="img-fluid rounded z-depth-1" width="60%" %}
+        {% include figure.liquid loading="eager" path="assets/img/lab6/d_no_lowpass.png" title="example image" class="img-fluid rounded z-depth-1" %}
     </div>
     <div class="col-sm-4 mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/lab6/d_lowpass.png" title="example image" class="img-fluid rounded z-depth-1" width="60%" %}
+        {% include figure.liquid loading="eager" path="assets/img/lab6/d_lowpass.png" title="example image" class="img-fluid rounded z-depth-1" %}
     </div>
 </div>
 
+For tuning Kd, I tried to find the middle ground between the overshooting seen in P-only control when D is too low and the jittering around the target angle seen when D is too high. I ended up settling on Kd value of 0.03. In the graph and video below, the car is able to rotate from 0 to 180 degrees with barely an overshoot.
+
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/lab6/pd_control.png" title="example image" class="img-fluid rounded z-depth-1" width="60%" %}
+        {% include figure.liquid loading="eager" path="assets/img/lab6/pd_control.png" title="example image" class="img-fluid rounded z-depth-1" width="75%" %}
     </div>
 </div>
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/xxDaO7HtKyk?si=VzMLLuXKXqTmHuf-" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
-### Integral Control
+#### Integral Control
+
+After achieving PD control, I noticed that there was barely any steady state error in my system, which would make the integral term unnecessary. However, it could be useful when running the car on higher friction surfaces like cardboard since I had tuned the PID for low friction surfaces like hard flooring. For tuning Ki, I tried to find a value which would allow the car to make a 180 degress turn on the cardboard surface, which was 0.5. In the graph and video below, the car is able to rotate from 0 to 180 degrees due to help from the integral term.
 
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/lab6/pid_control.png" title="example image" class="img-fluid rounded z-depth-1" width="60%" %}
+        {% include figure.liquid loading="eager" path="assets/img/lab6/pid_control.png" title="example image" class="img-fluid rounded z-depth-1" width="75%" %}
     </div>
 </div>
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/8-Q9mnV0jnk?si=wbH03s3vO4AJiV9j" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
+However, in my final controller I ended up changing the Ki to 0.25 since I noticed that running a Ki of 0.5 on hard flooring would cause the controller to always overshoot the target.
 
+### Changing the Target Angle
 
+To support changing the target angle while the PID controller is running, I added a new `SET_ANGLE` command which updates the controller's set point. And for controlling the orientation while the car is driving forward or backward, this could be done by running both the linear and rotational PID controllers at the same time and adding together the PWM outputs from both. The video below shows the car moving through a sequence of angles using the command below, as well as how the controller reacts to external disturbances.
+
+```c
+case SET_ANGLE: {
+    success = robot_cmd.get_next_value(set_point_angle);
+    if (!success) return;
+
+    last_error = gyr_yaw - set_point_angle;
+
+    break;
+}
+```
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/BVIDLI3-y8Y?si=kDMoeuIzfFXL52pO" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 ### 5000 Level Task
 
+Whenever the integral term is used for PID control, integrator windup is always an issue. This occurs when a disturbance, obstacle, or high friction causes the integrated error sum to grow so large and is unable to shrink fast enough that an extremely large PWM output is sent to the motors, causing the car to turn past its target angle. This is demonstrated in the video below. When tuning the Ki term on cardboard, I graphed the error sum and I noticed that the car tends to overshoot the target when the error sum was around 250, so I set the max to be 225 which seemed to resolve the issue. In the graph and video below, the car attempts to rotate from 0 to 180 degrees, but overshoots the target due to integral windup.
+
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/lab6/no_i_clamp.png" title="example image" class="img-fluid rounded z-depth-1" width="60%" %}
+        {% include figure.liquid loading="eager" path="assets/img/lab6/no_i_clamp.png" title="example image" class="img-fluid rounded z-depth-1" width="75%" %}
     </div>
 </div>
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/FGiw6cORHOI?si=yPgs3-Mr5yeUk1mE" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+Acknowledgement: I referenced Evan Leong's and Aidan Derocher's website from Spring 2025 for inspiration
