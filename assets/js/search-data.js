@@ -41,6 +41,11 @@ ninja.data = [{
           description: "Linear PID Control and Extrapolation",
           section: "Labs",handler: () => {
               window.location.href = "/ece5160-labreports/labs/lab5.html";
+            },},{id: "labs-lab-6",
+          title: 'Lab 6',
+          description: "Orientation Control",
+          section: "Labs",handler: () => {
+              window.location.href = "/ece5160-labreports/labs/lab6.html";
             },},{
         id: 'social-email',
         title: 'email',
