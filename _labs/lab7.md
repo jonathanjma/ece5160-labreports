@@ -24,7 +24,7 @@ We can then rewrite these dynamics into the form $\dot{x} = Ax + Bu$ to get our 
     </div>
 </div>
 
-To estimage the drag ($d$) and mass ($m$) terms, I performed a step response with the car where I drove the car forward towards the wall at a PWM value of 130, a 50% duty cycle, while recording raw ToF data. I then computed the derivative of the ToF measurements to get the velocity of the car at each timestep, and cut off the noisy data right as the car starts and at the end when it crashes into the wall.
+To estimate the drag ($d$) and mass ($m$) terms, I performed a step response with the car where I drove the car forward towards the wall at a PWM value of 130, a 50% duty cycle, while recording raw ToF data. I then computed the derivative of the ToF measurements to get the velocity of the car at each timestep, and cut off the noisy data right as the car starts and at the end when it crashes into the wall.
 
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
@@ -32,7 +32,7 @@ To estimage the drag ($d$) and mass ($m$) terms, I performed a step response wit
     </div>
 </div>
 
-To find the drag, the car needs to have reached a constant speed. However, since the car never reached constant speed during my testing, I calculated this by computing the exponential fit of the velocity data and finding the asymptote, which is shown below. For simplication, $u$ is set to 1, which gives us $d = \frac{u}{\dot{x}} = \frac{1 N}{-2.89 m/s} = -0.346 kg/s$. To find the mass, I first found the 90% rise time by finding the intersection of the exponential fit line with the 90% of the steady state speed, so $t_{0.9} = 1.739 s$. So, $m = \frac{-d \cdot t_{0.9}}{\ln 0.1} = -0.261 kg$.
+To find the drag, the car needs to have reached a constant speed. However, since the car never reached constant speed during my testing, I calculated this by computing the exponential fit of the velocity data and finding the asymptote, which is shown below. For simplification, $u$ is set to 1, which gives us $d = \frac{u}{\dot{x}} = \frac{1 N}{-2.89 m/s} = -0.346 kg/s$. To find the mass, I first found the 90% rise time by finding the intersection of the exponential fit line with the 90% of the steady state speed, so $t_{0.9} = 1.739 s$. So, $m = \frac{-d \cdot t_{0.9}}{\ln 0.1} = -0.261 kg$.
 
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
@@ -42,9 +42,9 @@ To find the drag, the car needs to have reached a constant speed. However, since
 
 ### Python Simulation
 
-Putting everything together, I computed the $A$, $B$, and $C$ matricies to be: $A = \begin{bmatrix} 0 & 1 \\\\ 0 & -1.32384312 \end{bmatrix}$, $B = \begin{bmatrix} 0 \\\\ -3.82491338 \end{bmatrix}$, and $C = \begin{bmatrix} 1 & 0 \end{bmatrix}$.
+Putting everything together, I computed the $A$, $B$, and $C$ matrices to be: $A = \begin{bmatrix} 0 & 1 \\\\ 0 & -1.32384312 \end{bmatrix}$, $B = \begin{bmatrix} 0 \\\\ -3.82491338 \end{bmatrix}$, and $C = \begin{bmatrix} 1 & 0 \end{bmatrix}$.
 
-For measurement noise, the ToF sensor's datasheet says it has an accuracy of 20mm, so $\sigma_3 = 20$. For process/model noise, I initially started off with 20 for both position and velocity. However, as shown in the graph on the left, this results in a stepped graph where the distance stays mostly constant between updates and predicts distances in the wrong direction while the car backs up. After a bit of tuning, I settled on $\sigma_1 = 10$ and $\sigma_2 = 70$, which results in the graph on the right. This gives a much smoother graph, and while it is a little jagged when the direction changes, it is able to recover more quickly. So the final covariance matrices are  $\text{Sigma}_u = \begin{bmatrix} 100 & 0 \\\\ 0 & 4900 \end{bmatrix}$ and $\text{Sigma}_z = \begin{bmatrix} 400 \end{bmatrix}$.
+For measurement noise, the ToF sensor's datasheet says it has an accuracy of 20mm, so $\sigma_3 = 20$. For process/model noise, I initially started off with 20 for both position and velocity. However, as shown in the graph on the left, this results in a stepped graph where the distance stays mostly constant between updates and predicts distances in the wrong direction while the car backs up. After a bit of tuning, I settled on $\sigma_1 = 10$ and $\sigma_2 = 70$, which relies on the model more for position, but less for velocity. This gives the graph on the right which is much smoother, and while it is a little jagged when the direction changes, it is able to recover more quickly. So the final covariance matrices are  $\text{Sigma}_u = \begin{bmatrix} 100 & 0 \\\\ 0 & 4900 \end{bmatrix}$ and $\text{Sigma}_z = \begin{bmatrix} 400 \end{bmatrix}$.
 
 <div class="row">
     <div class="col-sm-6 mt-3 mt-md-0">
@@ -74,7 +74,7 @@ def kf(mu, sigma, u, y, update):
     return mu, sigma
 ```
 
-The following Python code runs the simulated Kalman filter in the Juypter notebook. Since the cycle time of the Artemis control loop is around 10ms and new ToF measurements are recieved around every 54ms, the simulation predicts 5 distances for every ToF update.
+The following Python code runs the simulated Kalman filter in the Jupyter notebook. Since the cycle time of the Artemis control loop is around 10ms and new ToF measurements are received around every 54ms, the simulation predicts 5 distances for every ToF update.
 
 ```py
 mu = np.array([[dist_arr[0]], [0]])
@@ -104,7 +104,7 @@ Below is a full graph of the simulated Kalman filter running with ToF and PWM da
 
 ### Implementing on Robot
 
-To implement the Kalman filter on my robot, I used the `BasicLinearAlgebra` library to create the all of the necessary matrices and to perfom all the matrix operations in the prediction and update steps. One change from the simulation is that since each control loop cycle has a slightly different execution time (it can vary from 5-15ms), I decided to compute the discretized $Ad$ and $Bd$ matrices dynamically to improve accuracy.
+To implement the Kalman filter on my robot, I used the `BasicLinearAlgebra` library to create all of the necessary matrices and to perform all the matrix operations in the prediction and update steps. One change from the simulation is that since each control loop cycle has a slightly different execution time (it can vary from 5-15ms), I decided to compute the discretized $Ad$ and $Bd$ matrices dynamically to improve accuracy.
 
 ```c
 Matrix<2,2> A = {0, 1,
