@@ -46,6 +46,11 @@ ninja.data = [{
           description: "Orientation Control",
           section: "Labs",handler: () => {
               window.location.href = "/ece5160-labreports/labs/lab6.html";
+            },},{id: "labs-lab-7",
+          title: 'Lab 7',
+          description: "Kalman Filter",
+          section: "Labs",handler: () => {
+              window.location.href = "/ece5160-labreports/labs/lab7.html";
             },},{
         id: 'social-email',
         title: 'email',
