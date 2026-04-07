@@ -51,6 +51,11 @@ ninja.data = [{
           description: "Kalman Filter",
           section: "Labs",handler: () => {
               window.location.href = "/ece5160-labreports/labs/lab7.html";
+            },},{id: "labs-lab-8",
+          title: 'Lab 8',
+          description: "Stunts!",
+          section: "Labs",handler: () => {
+              window.location.href = "/ece5160-labreports/labs/lab8.html";
             },},{
         id: 'social-email',
         title: 'email',
