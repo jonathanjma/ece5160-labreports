@@ -8,7 +8,7 @@ importance: 9
 
 ### Control
 
-For control, I decided to use my orientation PID to rotate the robot to each angle in order to map the room. This was better than open-loop control since it offered more accuracy and consistency. It is also more simple to implement than angular speed control while offering most of its beenfits. To perform my orientation PID scan, I created a new command `MAP` which resets the PID variables and starts a sequence of 25 rotations. Each rotation would be 15 degrees, which would produce a more detailed map than the 15 rotations suggested by the handout. I also created a `GET_MAP_DATA` command to retrieve the map and debug data from the robot.
+For control, I decided to use my orientation PID to rotate the robot to each angle in order to map the room. This was better than open-loop control since it offered more accuracy and consistency. It is also more simple to implement than angular speed control while offering most of its benefits. To perform my orientation PID scan, I created a new command `MAP` which resets the PID variables and starts a sequence of 25 rotations. Each rotation would be 15 degrees, which would produce a more detailed map than the 15 rotations suggested by the handout. I also created a `GET_MAP_DATA` command to retrieve the map and debug data from the robot.
 
 ```c
 case MAP: {
@@ -57,27 +57,34 @@ if (perform_map) {
 }
 ```
 
-The graphs below show the yaw and distance sensor readings while the robot performs a mapping. The yaw graph shows little to no overshoot when performing each incremental rotation and plenty of settling time (seems to be 500-750ms) at each set point.
+The graphs below show the yaw and distance sensor readings while the robot performs a mapping. The yaw graph shows little to no overshoot when performing each incremental rotation and plenty of settling time (seems to be 500-750ms) at each set point. The video below shows the robot as it performs a full mapping sequence. The tile floor at my place was slightly titled and uneven which contributed to the robot's position translating while rotating, which was not an issue I observed when running it in the lab.
 
-*** maybe update too after vid
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
         {% include figure.liquid loading="eager" path="assets/img/lab9/yaw_dist.png" title="example image" class="img-fluid rounded z-depth-1" width="75%" %}
     </div>
 </div>
 
-*** insert video of pid spin
+<iframe width="560" height="315" src="https://www.youtube.com/embed/i9OGQ-RL1L4?si=IWXSl2MQRbuXMgO8" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+I also tried having the robot perform two rotations in-order to see if that would improve the scanning accuracy, which is shown below. While most points are in similar locations in both the first and second rotations, some points differ significantly due to the robot rotating slightly off-axis and translating slightly as it performed the 50 rotations needed to produce this graph. Therefore, I decided to just do one rotation when mapping out the room.
+
+<div class="row">
+    <div class="col-sm mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="assets/img/lab9/double_spin.png" title="example image" class="img-fluid rounded z-depth-1" width="40%" %}
+    </div>
+</div>
 
 ### Mapping
 
-The below graphs show the results of each of the 5 scans in 2 representations: a polar angle to distance graph and the transformed coordinates of each obstacle in world coordinates. To transform the points from the ToF sensor's frame to the robot's frame and then the world frame, I created 2 matrices $T^R_{TOF}$ and $T^W_R$, where
+The below graphs show the results of each of the 5 scans of the room in lab in 2 representations: a polar angle to distance graph and the transformed coordinates of each obstacle in world coordinates. To transform the points from the ToF sensor's frame to the robot's frame and then the world frame, I created 2 matrices $T^R_{TOF}$ and $T^W_R$, where
 
 \begin{equation}
 T^R_{TOF} = \begin{bmatrix} 1 & 0 & 0.23 \\\\ 0 & 1 & 0 \\\\ 0 & 0 & 1 \end{bmatrix} \text{ and } 
 T^W_R = \begin{bmatrix} \cos\psi & -\sin\psi & X \\\\ \sin\psi & \cos\psi & Y \\\\ 0 & 0 & 1 \end{bmatrix} \nonumber
 \end{equation}
 
-$X$ and $Y$ are the x and y coordinate of the robot when it creates the scan and $\psi$ is the raw yaw while from the DMP reflected over the y-axis to align the coordinate frames. This is shown in the code below.
+$X$ and $Y$ are the x and y coordinate of the robot for each scan and $\psi$ is the raw yaw while from the DMP reflected over the y-axis to align the robot's coordinate frame with the room's. This is shown in the code below.
 
 ```py
 def transform_points(dists, yaws, robot_X, robot_Y):
@@ -143,7 +150,7 @@ def transform_points(dists, yaws, robot_X, robot_Y):
 
 ### Combined Map
 
-Below is the color-coded map of all of scans in world coordinates:
+And below is the color-coded map of all of scans in world coordinates.
 
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
