@@ -56,6 +56,11 @@ ninja.data = [{
           description: "Stunts!",
           section: "Labs",handler: () => {
               window.location.href = "/ece5160-labreports/labs/lab8.html";
+            },},{id: "labs-lab-9",
+          title: 'Lab 9',
+          description: "Mapping",
+          section: "Labs",handler: () => {
+              window.location.href = "/ece5160-labreports/labs/lab9.html";
             },},{
         id: 'social-email',
         title: 'email',
