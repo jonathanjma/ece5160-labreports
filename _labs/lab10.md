@@ -124,7 +124,7 @@ def update_step():
 
 ### Results
 
-I then ran the Bayes filter using the simulation across 2 runs, which are shown below. The runs show that the Bayes belief (in blue) closely follows the ground truth data points (in green). The images also show how the Bayes filter is superior to just using the odometry motion model (in red) which does not follow the ground truth at all.
+I then ran the Bayes filter using the simulation across 2 runs, which are shown below. The runs show that the Bayes belief (in blue) closely follows the ground truth data points (in green). The images also show how the Bayes filter is superior to just using the odometry motion model (in red) which does not follow the ground truth at all. Some reasons why the filter could be inaccurate is the fact that the room is discritized, which limits the predictions to the middle of each cell. The filter also seems to be more inaccurate when the robot is far from walls and in the middle of large spaces.
 
 #### Run 1
 
