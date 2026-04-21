@@ -21,6 +21,11 @@ ninja.data = [{
           description: "Artemis and Bluetooth",
           section: "Labs",handler: () => {
               window.location.href = "/ece5160-labreports/labs/lab1.html";
+            },},{id: "labs-lab-10",
+          title: 'Lab 10',
+          description: "Grid Localization using Bayes Filter (Simulation)",
+          section: "Labs",handler: () => {
+              window.location.href = "/ece5160-labreports/labs/lab10.html";
             },},{id: "labs-lab-2",
           title: 'Lab 2',
           description: "Inertial Measurement Unit (IMU)",
