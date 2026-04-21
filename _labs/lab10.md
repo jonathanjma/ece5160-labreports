@@ -6,7 +6,11 @@ img: assets/img/lab10/localization.jpg
 importance: 10
 ---
 
+In order to implement the simulated Bayes filter, I first needed to implement 5 functions: control computation, the motion model, the prediction step, the sensor model, and the update step.
+
 ### Control Computation
+
+To compute the control input needed to get from the robot's previous pose to its current pose, we can use the odometry motion model covered in class. The model states that any control input can be broken up into 3 components- the first rotation which rotates the robot in the direction of the target point, a translation which moves it to the target point, and the second rotation which rotates it to the target orientation. We also make sure to normalize the angles since the robot uses angles between -180 and +180.
 
 ```py
 def compute_control(cur_pose, prev_pose):
@@ -14,8 +18,8 @@ def compute_control(cur_pose, prev_pose):
     the control information based on the odometry motion model.
 
     Args:
-        cur_pose  ([Pose]): Current Pose
-        prev_pose ([Pose]): Previous Pose 
+        cur_pose  ([Pose]): Current Pose, where Pose is (x, y, theta)
+        prev_pose ([Pose]): Previous Pose
 
     Returns:
         [delta_rot_1]: Rotation 1  (degrees)
@@ -30,6 +34,8 @@ def compute_control(cur_pose, prev_pose):
 ```
 
 ### Motion Model
+
+The robot's motion model computes P(X' \| X, u), which is the probability that the robot reaches the current state X' given that its previous state was X and the control input was u. This is accomplished by using 3 independent gaussians to compute the likelihood of the first rotation, translation, and second rotation based actual control input and the ideal control input. And since the gaussians are independent, we can multiply them together to get the final probability.
 
 ```py
 def odom_motion_model(cur_pose, prev_pose, u):
@@ -56,6 +62,8 @@ def odom_motion_model(cur_pose, prev_pose, u):
 
 ### Prediction Step
 
+In the prediction step, we attempt to localize the robot on a 12x9 grid, where each grid cell also has 18 theta cells. To do this, we compute the probability that the robot is in a certain cell given its previous cell and control input for every possible pair of previous and current poses. This comes out to 1944^2 iterations per step, which can be reduced by skipping the inner loop of cells with a probability if less than 0.0001 since they will not contribute much to the belief.
+
 ```py
 def prediction_step(cur_odom, prev_odom):
     """ Prediction step of the Bayes Filter.
@@ -71,7 +79,7 @@ def prediction_step(cur_odom, prev_odom):
             for ca in range(mapper.MAX_CELLS_A):
 
                 # don't check if belief is less than 0.0001
-                if loc.bel[cx, cy, ca] > 0.0005:
+                if loc.bel[cx, cy, ca] > 0.0001:
                     for cx2 in range(mapper.MAX_CELLS_X):
                         for cy2 in range(mapper.MAX_CELLS_Y):
                             for ca2 in range(mapper.MAX_CELLS_A):
@@ -81,6 +89,8 @@ def prediction_step(cur_odom, prev_odom):
 ```
 
 ### Sensor Model
+
+The robot's sensor model computes P(Z \| X), which is the probability of the likelihood of measurement Z given that the robot is in state X. This is accomplished by using gaussians to compute the likelihood of each measurment given the expected measurement values for the state (which is precomputed by the simulation).
 
 ```py
 def sensor_model(obs):
@@ -97,6 +107,8 @@ def sensor_model(obs):
 
 ### Update Step
 
+Finally, the update step corrects the filter's predictions. This is done by iterating through each cell and updating its belief using the probabilities from the sensor model. Finally, we normalize the beliefs to prevent them from becoming smaller over time and vanishing.
+
 ```py
 def update_step():
     """ Update step of the Bayes Filter.
@@ -112,6 +124,10 @@ def update_step():
 
 ### Results
 
+I then ran the Bayes filter using the simulation across 2 runs, which are shown below. The runs show that the Bayes belief (in blue) closely follows the ground truth data points (in green). The images also show how the Bayes filter is superior to just using the odometry motion model (in red) which does not follow the ground truth at all.
+
+#### Run 1
+
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
         {% include figure.liquid loading="eager" path="assets/img/lab10/run1.png" title="example image" class="img-fluid rounded z-depth-1" width="75%" %}
@@ -120,6 +136,8 @@ def update_step():
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/o-ejXRAHLso?si=Z7hNCd3_AoQbgLxe" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
+#### Run 2
+
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
         {% include figure.liquid loading="eager" path="assets/img/lab10/run2.png" title="example image" class="img-fluid rounded z-depth-1" width="75%" %}
@@ -127,3 +145,6 @@ def update_step():
 </div>
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/bRvAS0hbRtk?si=XBP162XAvTGLlDBp" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+
+Acknowledgements: I referenced Aidan Derocher's website from Spring 2025 for inspiration
