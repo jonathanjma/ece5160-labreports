@@ -26,6 +26,11 @@ ninja.data = [{
           description: "Grid Localization using Bayes Filter (Simulation)",
           section: "Labs",handler: () => {
               window.location.href = "/ece5160-labreports/labs/lab10.html";
+            },},{id: "labs-lab-11",
+          title: 'Lab 11',
+          description: "Grid Localization using Bayes Filter (Real Robot)",
+          section: "Labs",handler: () => {
+              window.location.href = "/ece5160-labreports/labs/lab11.html";
             },},{id: "labs-lab-2",
           title: 'Lab 2',
           description: "Inertial Measurement Unit (IMU)",
