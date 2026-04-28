@@ -12,11 +12,11 @@ Before starting, I first checked the functionality of the localization starter c
 
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/lab11/sim_still_works.png" title="example image" class="img-fluid rounded z-depth-1" width="75%" %}
+        {% include figure.liquid loading="eager" path="assets/img/lab11/sim_still_works.png" title="example image" class="img-fluid rounded z-depth-1" width="60%" %}
     </div>
 </div>
 
-In order to implement a Bayes filter using the real robot, I first implemented the `perform_observation_loop` in the `RealRobot` class, which is called when the update loop needs to collect observations about the robot's sorroundings. I first send a `MAP` command which I implemented in lab 9 to collect 18 ToF readings which are seperated by 20 degrees. I also made this function `async` so that I could wait for 25 seconds for the localization spin to be complete before sending the `GET_MAP_DATA` command also from lab 9 to get the ToF measurement data. Since the localization code expects the measurements to be in counter-clockwise order by yaw instead of clockwise, I reverse the order of the list.
+In order to implement a Bayes filter using the real robot, I first implemented the `perform_observation_loop` in the `RealRobot` class, which is called when the update loop needs to collect observations about the robot's surroundings. I first send a `MAP` command which I implemented in lab 9 to collect 18 ToF readings which are seperated by 20 degrees. I also made this function `async` so that I could wait for 25 seconds for the localization spin to be complete before sending the `GET_MAP_DATA` command also from lab 9 to get the ToF measurement data. Since the localization code expects the measurements to be in counter-clockwise order by yaw instead of clockwise, I reverse the order of the list.
 
 ```py
 async def perform_observation_loop(self, rot_vel=120):
@@ -49,41 +49,39 @@ Below is a video of the robot performing a localization spin at the (-3, -2) coo
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/AnkN5q0Lt6w?si=4RYIo6lekVyKoF3X" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
-#### (-3, 2) Scan
+#### (-3, -2) Scan
 
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/lab11/-3_-2.png" title="example image" class="img-fluid rounded z-depth-1" width="75%" %}
+        {% include figure.liquid loading="eager" path="assets/img/lab11/-3_-2.png" title="example image" class="img-fluid rounded z-depth-1" width="50%" %}
     </div>
 </div>
 
-The robot was able to perfectly localize itself at (-3, -2), as the belief dot is drawn directly on top of the ground truth dot.
+The robot was able to perfectly localize itself at (-3, -2), as the belief dot is drawn directly on top of the ground truth dot. I think the robot was able to localize well here because the location has many unique features since there are 3 surrounding walls and a large opening.
 
 #### (0, 0) Scan
 
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/lab11/0_0.png" title="example image" class="img-fluid rounded z-depth-1" width="75%" %}
+        {% include figure.liquid loading="eager" path="assets/img/lab11/0_0.png" title="example image" class="img-fluid rounded z-depth-1" width="50%" %}
     </div>
 </div>
 
-The robot was also able to perfectly localize itself at (0, 0).
+The robot was also able to perfectly localize itself at (0, 0). I think the robot was able to localize well here because the location is at the center of the map so it can see many different wall features.
 
 #### (0, 3) Scan
 
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/lab11/0_3.png" title="example image" class="img-fluid rounded z-depth-1" width="75%" %}
+        {% include figure.liquid loading="eager" path="assets/img/lab11/0_3.png" title="example image" class="img-fluid rounded z-depth-1" width="50%" %}
     </div>
 </div>
 
-The robot was also able to perfectly localize itself at (0, 3), but for this location I had to change the robot's code to use the lab 9 behavior of taking 24 ToF measurements 15 degrees apart. The image below shows the result of only 15 measurements where the robot's position is completely incorrect, and this was repeated over multiple runs.
-
-10th point
+The robot was also able to perfectly localize itself at (0, 3), but for some reason taking ToF measurements 20 degrees apart caused it to consistently localize on the completely incorrect part of the map, as shown in the image below. I fixed this by changing the code to use the lab 9 behavior of taking 24 ToF measurements 15 degrees apart. One reason this could have happened is because for a large part of the rotation ToF sensor distances maxxing out, which may cause the filter to localize to the wrong area.
 
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/lab11/0_3_bad.png" title="example image" class="img-fluid rounded z-depth-1" width="75%" %}
+        {% include figure.liquid loading="eager" path="assets/img/lab11/0_3_bad.png" title="example image" class="img-fluid rounded z-depth-1" width="60%" %}
     </div>
 </div>
 
@@ -91,20 +89,20 @@ The robot was also able to perfectly localize itself at (0, 3), but for this loc
 
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/lab11/5_-3.png" title="example image" class="img-fluid rounded z-depth-1" width="75%" %}
+        {% include figure.liquid loading="eager" path="assets/img/lab11/5_-3.png" title="example image" class="img-fluid rounded z-depth-1" width="50%" %}
     </div>
 </div>
 
-The robot was able to perfectly localize itself at (5, -3).
+The robot was able to perfectly localize itself at (5, -3). I think the robot was able to localize well here because the location has many unique features since there are 2 sorrounding walls and two openings.
 
 #### (5, 3) Scan
 
 <div class="row">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/lab11/5_3.png" title="example image" class="img-fluid rounded z-depth-1" width="75%" %}
+        {% include figure.liquid loading="eager" path="assets/img/lab11/5_3.png" title="example image" class="img-fluid rounded z-depth-1" width="50%" %}
     </div>
 </div>
 
-The robot was mostly able to localize itself at (5, 3). Some reasons for this could be the ToF sensor distances maxxing out.
+The robot was mostly able to localize itself at (5, 3). One reason for this could be the ToF sensor distances maxxing out, causing the robot to think it was closer to the bottom wall than it actually was.
 
-etc
+Acknowledgements: I referenced Aidan Derocher's website from Spring 2025 for inspiration
